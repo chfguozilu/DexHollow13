@@ -1,0 +1,2 @@
+# DexHollow13
+DexHollow是一款用于保护Android13平台的dex的加壳器，实际效果是将dex文件中的方法体抽空，然后在运行时将方法体回填 
