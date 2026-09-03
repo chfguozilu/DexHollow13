@@ -67,5 +67,4 @@ export ANDROID_SDK_ROOT=/home/ignite/Software/Android/Sdk
 ```
 
 `build_runtime.sh` 会删除并重建项目内的 `out/runtime` 和两个 Native 构建目录；
-`build_release.sh` 随后重建 Host，并把运行所需文件汇总到 `dist/`。这些脚本不写
-`Project2` 之外的路径
+`build_release.sh` 随后重建 Host，并把运行所需文件汇总到 `dist/`
