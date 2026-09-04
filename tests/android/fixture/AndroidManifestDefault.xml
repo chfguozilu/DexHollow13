@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    与主 fixture 使用同一组 DEX，但刻意不声明 android:name 和 appComponentFactory。
+    它验证 Host 能保存 Framework 默认 Application，Loader 也不会错误创建空 Factory 类名。
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.dexhollowfixture">
+
+    <uses-sdk
+        android:minSdkVersion="33"
+        android:targetSdkVersion="33" />
+
+    <application
+        android:debuggable="true"
+        android:extractNativeLibs="false"
+        android:label="DexHollow13 Default Fixture"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
