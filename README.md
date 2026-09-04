@@ -34,7 +34,7 @@ apk，抽取其中可保护方法的 `code_item`，然后生成一个经过 zipa
 
 暂不支持 split apk/apkS/Xapk、CompactDex 输入、x86/x86_64，也不承诺兼容任意
 厂商修改过的 Android 13 ART。`ArtMethod` 字段偏移、`DexFile` 布局和
-`ClassLinker::LoadMethod` 符号都是 ART 私有 ABI，换 Android 版本时必须重新核对。
+`ClassLinker::LoadMethod` 符号都是 ART 私有 ABI，换 Android 版本时必须重新核对
 
 ## 构建
 
@@ -104,7 +104,7 @@ apksigner sign --ks your-release.jks app-protected-unsigned-your-app.apk
 ```text
 classes.dex                         Java Loader
 assets/.d13/0.dat                   加密启动索引，固定名称
-assets/.d13/r/<32位随机名>.dat     加密 Hollow dex 或加密 Payload
+assets/.d13/r/<32位随机名>.dat      加密 Hollow dex 或加密 Payload
 lib/<abi>/libdexhollow13_shell.so   Native Runtime
 lib/<abi>/libdexhollow13_shadowhook.so
 lib/<abi>/libdexhollow13_shadowhook_nothing.so
