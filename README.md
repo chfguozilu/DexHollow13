@@ -1,4 +1,4 @@
-<img width="808" height="199" alt="图片" src="https://github.com/user-attachments/assets/fbf14411-a683-4bb8-8b27-0bc713ba522a" /><img width="808" height="199" alt="图片" src="https://github.com/user-attachments/assets/0688c7fb-47fa-4a15-8e4c-e67bab5e9eb1" /># DexHollow13
+# DexHollow13
 
 DexHollow13 是一个面向 Android 13 / ART 的 dex 方法体抽取工具。它接收一个
 apk，抽取其中可保护方法的 `code_item`，然后生成一个经过 zipalign 但没有
