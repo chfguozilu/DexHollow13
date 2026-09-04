@@ -54,8 +54,14 @@ ShadowHook 和 Monocypher 的固定版本已放在 `vendor/`，不需要另外�
 先设置本机 Android SDK 路径：
 
 ```bash
-cd DexHollow13
 export ANDROID_SDK_ROOT=/path/to/Android/Sdk
+```
+
+然后必须要保证 shell 脚本有执行的权限才能开始构建：
+
+```bash
+cd DexHollow13
+find . -name "*.sh" | xargs chmod a+x
 ./tools/build_release.sh
 ```
 
