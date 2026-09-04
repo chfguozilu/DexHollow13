@@ -1,0 +1,6 @@
+add_executable(dexhollow_host_tests core_tests.cpp)
+target_link_libraries(dexhollow_host_tests PRIVATE dexhollow_host_core)
+dexhollow_enable_warnings(dexhollow_host_tests)
+
+add_test(NAME dexhollow_host_tests COMMAND dexhollow_host_tests)
+
