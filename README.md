@@ -196,6 +196,8 @@ docs/              项目文档
 
 ## 示例：
 
+这里使用的 app 是从应用商店找的一个没有加壳的 app（番茄免费小说）
+
 先把项目拉到本地
 
 <img width="808" height="199" alt="图片" src="https://github.com/user-attachments/assets/a4cbbfd7-14e7-40f8-96d3-d1e8d6592239" />
@@ -210,3 +212,26 @@ docs/              项目文档
 
 <img width="980" height="672" alt="图片" src="https://github.com/user-attachments/assets/8a07412a-b5e0-47cd-acbc-e2d69b8a4682" />
 
+这个时候可以看到，加壳后的 app 已经产生了
+
+<img width="858" height="95" alt="图片" src="https://github.com/user-attachments/assets/046d9493-2952-4035-adcb-ed50de4e1feb" />
+
+然后给它签名一下
+
+<img width="954" height="749" alt="图片" src="https://github.com/user-attachments/assets/ea0c9612-9025-45e0-a6e5-8edeaae3c55b" />
+
+先用 jadx-gui 打开这个 app 看看
+
+<img width="1093" height="738" alt="图片" src="https://github.com/user-attachments/assets/ccc85c46-b86c-4733-a8ff-96a8246720fb" />
+
+可以看出来，app 本身已经被加壳了，现在安装到手机上打开看看是什么样子的
+
+<img width="374" height="782" alt="图片" src="https://github.com/user-attachments/assets/5e36273d-e58b-416e-bd76-bfde2881d72f" />
+
+再看看别的界面
+
+<img width="375" height="786" alt="图片" src="https://github.com/user-attachments/assets/a2fb94e5-c2d6-4105-b558-f5d982f93411" />
+
+<img width="375" height="786" alt="图片" src="https://github.com/user-attachments/assets/ba05f55d-7c32-415f-9fb5-3e37bad4b690" />
+
+可以看出来，app 本身还是可以正常运行的，只不过，相比原来变卡了一些
