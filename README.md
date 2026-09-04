@@ -1,44 +1,74 @@
 # DexHollow13
 
-DexHollow13 是一个面向 Android 13 / ART 的 DEX 方法体抽取型保护器。它把原 APK 的
-`classes*.dex` 移到 `assets/dexhollow/`，将方法实现替换为可通过 verifier 的桩，再由
-应用进程中的 Native Runtime 把 `ArtMethod` 指向 Payload 中的 Shadow CodeItem
+DexHollow13 是一个面向 Android 13 / ART 的 dex 方法体抽取工具。它接收一个
+apk，抽取其中可保护方法的 `code_item`，然后生成一个经过 zipalign 但没有
+签名的新 apk
 
-项目的核心约束是：原始指令不会在任何时刻写回 Hollow DEX
+项目的核心规则是：真实方法体不会写回 Hollow dex。ART verifier 始终校验
+类型正确的默认返回桩；真实 `code_item` 在 `ClassLinker::LoadMethod` 命中时才从
+加密 Payload 中单独解密，并只会被交给当前进程中的 `ArtMethod`
 
-目前版本的dex中的方法体被抽空之后不会被加密，并且存储方法体信息的文件也不会被加密，后续可能会更新加密
+## 功能
 
-## 1. 支持范围
+- 直接处理 base apk，支持一个或多个 `classes*.dex`
+- 自动保存原 `Application` 和 `AppComponentFactory`，启动时正确交还控制权
+- 生成可通过 verifier 的 Hollow dex，保留 try/catch、switch 和 array-data 等完整
+  CodeItem 结构
+- bootstrap 和 Hollow dex 整体使用 XChaCha20-Poly1305 认证加密
+- Payload 使用逐方法认证加密，未加载的方法保持密文
+- 每次打包生成独立的随机密钥、nonce 和资源文件名
+- 支持 `arm64-v8a` 和 `armeabi-v7a`，不会擅自改变原 apk 的 Native ABI 选择
+- 壳使用私有命名的 ShadowHook，可与业务 apk 自带的 ShadowHook 共存
+- 输出始终未签名，签名由使用者自己的发布流程完成
 
-- Android 13（API 33），源码基线为 `android-13.0.0_r84`
-- `arm64-v8a` 和 `armeabi-v7a`
-- 单个 base APK 内的一个或多个 `classes*.dex`
-- 自定义或默认 `Application`，以及常见的自定义 `AppComponentFactory`
-- direct、virtual、static、instance、`<clinit>` 和常见构造方法
-- 完整保存带 try/catch、switch、array-data 等内容的 Standard DEX `code_item`
-- 输入 APK 可以已有签名；输出固定为 zipalign 后的未签名 APK
+## 支持范围
 
-当前不支持 split APK/APKS/XAPK、CompactDex 输入、Android 12/14，以及无条件适配所有
-厂商改动过的 Android 13 ART。构造器支持初始化前的 if/goto 和 p0 寄存器搬运；如果分支
-可能绕过 `this/super.<init>`、出现 switch，或 try 区间覆盖初始化前缀，则明确报告为
-未保护。详见 `docs/05-constructor-stubs.md`
+| 项目          | 当前支持                                                     |
+| ------------- | ------------------------------------------------------------ |
+| Android       | Android 13 / API 33                                          |
+| AOSP 参考版本 | `android-13.0.0_r84`                                         |
+| CPU           | ARM64、ARM32                                                 |
+| apk           | 单个 base apk，可含多 dex                                    |
+| 启动组件      | 默认/自定义 Application，常见 AppComponentFactory            |
+| 方法          | direct、virtual、static、instance、`<clinit>` 和常见构造方法 |
 
-v1 保留每个 `encoded_method.code_off` 并在原指令区写桩，所以少数只有 1 个 code unit 的
-标量/对象返回方法，或不足 3 个 code unit 的 wide 返回方法，物理上放不下“置零+返回”。
-这些极短方法保留原实现并计入“有代码但未保护”，不会被静默算作已保护
+暂不支持 split apk/apkS/Xapk、CompactDex 输入、x86/x86_64，也不承诺兼容任意
+厂商修改过的 Android 13 ART。`ArtMethod` 字段偏移、`DexFile` 布局和
+`ClassLinker::LoadMethod` 符号都是 ART 私有 ABI，换 Android 版本时必须重新核对。
 
-## 2. 构建
+## 构建
 
-本机需要 C++ 编译器、JDK、Android SDK 33、Build Tools 33.0.2、NDK r25c、Ninja、
-libzip、zlib、OpenSSL，以及能够构建 ShadowHook v2.0.1 的 CMake 4.0.2 或更高版本
+### 依赖
+
+- C++17 编译器
+- JDK
+- Android SDK 33
+- Android Build Tools 33.0.2
+- Android NDK 25.2.9519653
+- CMake 4.0.2 或更高版本
+- Ninja
+- libzip、zlib 和 OpenSSL 开发包
+
+ShadowHook 和 Monocypher 的固定版本已放在 `vendor/`，不需要另外下载
+
+先设置本机 Android SDK 路径：
 
 ```bash
 cd DexHollow13
-export ANDROID_SDK_ROOT=/home/ignite/Software/Android/Sdk
+export ANDROID_SDK_ROOT=/path/to/Android/Sdk
 ./tools/build_release.sh
 ```
 
-成功后得到自包含目录：
+如果本机版本不同，可以用环境变量覆盖，不需要改 CMake 或脚本：
+
+```bash
+export dexHOLLOW_BUILD_TOOLS=33.0.2
+export dexHOLLOW_NDK_VERSION=25.2.9519653
+export dexHOLLOW_CMAKE_BIN=/path/to/cmake
+export dexHOLLOW_ZIPALIGN=/path/to/zipalign
+```
+
+构建成功后得到：
 
 ```text
 dist/
@@ -50,94 +80,110 @@ dist/
         └── armeabi-v7a/
 ```
 
-`dex-hollow` 会自动从同目录的 `runtime/` 查找 Loader 和 SO。若需要使用另一个 Runtime
-目录，可以设置 `DEXHOLLOW_RUNTIME_DIR`。完整环境说明见 `docs/01-build-environment.md`
-
-发布目录始终携带两套 Runtime；写入 APK 时则遵守输入的 Native ABI：纯 Java/Kotlin APK
-写入两套，自带 SO 的 APK 只写入原本已经存在的 `arm64-v8a`/`armeabi-v7a` 套件。这避免
-新增 ABI 改变 PackageManager 的进程位数选择。含 x86、x86_64、旧 armeabi 等未支持 so
-的输入会被拒绝，不会生成部分 ABI 可以运行、部分 ABI 启动崩溃的产物
-
-## 3. 使用
+## 使用
 
 ```bash
 cd /path/to/apk-directory
 /path/to/DexHollow13/dist/dex-hollow your-app.apk
 ```
 
-成功后，当前目录出现：
+当前目录会生成：
 
 ```text
-app-protected-PhotoGallery.apk
+app-protected-unsigned-your-app.apk
 ```
 
-该文件已经过 `zipalign`，但没有 APK 签名。之后可由使用者自己的发布流程签名，例如：
+输出已经做过 zipalign，但故意没有签名。正式发布时使用自己的密钥：
 
 ```bash
-apksigner sign --ks your-release.jks app-protected-your-app.apk
+apksigner sign --ks your-release.jks app-protected-unsigned-your-app.apk
 ```
 
-命令行会报告原 `Application`、原 `AppComponentFactory`、DEX 数量，并把方法统计分成
-“已保护”“原本无 code_item”“有代码但未保护”三组。开发期还保留 `--transform-dex`
-单 DEX 诊断入口
-
-## 4. APK 中的结果
+## apk 中会出现什么
 
 ```text
-classes.dex                                  只含 Java Loader
-assets/dexhollow/bootstrap.bin               原启动类名和 DEX 清单
-assets/dexhollow/dex/classes.dex             第一份 Hollow DEX
-assets/dexhollow/dex/classes2.dex            第二份 Hollow DEX（如果存在）
-assets/dexhollow/payload/payload1.bin         第一份 Payload
-assets/dexhollow/payload/payload2.bin         第二份 Payload（如果存在）
-lib/arm64-v8a/libdexhollow.so                 ARM64 Runtime
-lib/arm64-v8a/libshadowhook.so                ARM64 Hook 引擎
-lib/arm64-v8a/libshadowhook_nothing.so        ShadowHook linker 探测辅助库
-lib/armeabi-v7a/...                           对应的 ARM32 文件
+classes.dex                         Java Loader
+assets/.d13/0.dat                   加密启动索引，固定名称
+assets/.d13/r/<32位随机名>.dat     加密 Hollow dex 或加密 Payload
+lib/<abi>/libdexhollow13_shell.so   Native Runtime
+lib/<abi>/libdexhollow13_shadowhook.so
+lib/<abi>/libdexhollow13_shadowhook_nothing.so
 ```
 
-上表展示纯 Java APK 的双 ABI 结果；自带单 ABI SO 的输入只会出现匹配的 Runtime 目录
+dex 和 Payload 使用同一目录、同一 `.dat` 后缀，文件名每次打包都会改变。
+固定的 `0.dat` 是 Loader 找到其他随机资源前必须知道的入口。这种命名只是让
+解压结果不那么显眼，不是安全边界
 
-原 APK 根目录中的 `classes*.dex` 会被删除，因此初始 `PathClassLoader` 只能找到 Loader。
-`ShellComponentFactory` 在 Framework 创建任何业务组件前，构造包含全部 Hollow DEX 的
-`InMemoryDexClassLoader`；Native Hook 则在业务类定义之前安装
+## 运行过程概览
 
-## 5. 自动化验证
+```text
+ShellComponentFactory 被 Android Framework 创建
+    ↓
+解密启动索引，找到全部 dex/Payload 资源
+    ↓
+解密 Hollow dex，映射后立即删除临时明文文件
+    ↓
+认证 Payload 元数据，建立 method_idx 索引
+    ↓
+安装 ClassLinker::LoadMethod Hook
+    ↓
+InMemoryDexClassLoader 打开所有 Hollow dex
+    ↓
+某个受保护方法被加载时，只解密它自己的 code_item
+```
 
-连接 Android 13 测试机后执行：
+详细时序见 [架构说明](docs/architecture.md)
+
+## 测试
+
+Host 单元测试：
 
 ```bash
-export ANDROID_SDK_ROOT=/home/ignite/Software/Android/Sdk
+cmake -S . -B build
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+```
+
+连接 Android 13 测试机后执行完整 ARM64/ARM32 回归：
+
+```bash
+export ANDROID_SDK_ROOT=/path/to/Android/Sdk
 ./tools/test_android_fixture.sh
 ```
 
-脚本从源码重建 Host、Runtime 和双 DEX fixture，先验证输出未签名且 zipalign 正确，再分别
-安装 ARM64 与强制 ARM32 的测试 APK。测试覆盖自定义启动组件、构造器、异常表、两种 switch、
-array-data、对象/整数/宽返回值，以及 20,000 次热点调用。测试签名只用于安装测试副本，
-不改变“加壳器输出未签名”的契约
+详细覆盖范围和故障定位见 [测试说明](docs/testing.md)
 
-除 fixture 外，项目也已用一个有效签名、5 DEX 的 AndroidX APK 做过真机冷启动：54,881 个
-方法进入 Payload/Shadow 索引，原 `CoreComponentFactory` 正常委托，界面成功显示业务结果
-
-## 6. 代码与文档入口
-
-代码：
+## 项目目录
 
 ```text
-host/              电脑端 APK/DEX 变换器
-runtime/loader/    APK 根 classes.dex 中的 Java 启动层
-runtime/native/    Android 13 ART Shadow CodeItem 引擎
-include/           Host 公共结构与接口
-tests/             Host 单元测试和 Android 真机 fixture
-docs/              从文件格式到 Runtime 时序的教程
-third_party/       固定版本的 ShadowHook 及依赖说明
+host/              电脑端 apk/dex 处理器
+common/            Host 和 Android Runtime 共用的格式与加密实现
+include/           C++ 公共接口
+runtime/loader/    进入 apk 根 classes.dex 的 Java Loader
+runtime/native/    Android 13 ART 适配和 Shadow CodeItem 实现
+tests/             Host 单元测试和 Android fixture
+tools/             构建、发布和真机回归脚本
+vendor/            固定版本的第三方源码与许可证
+docs/              项目文档
 ```
 
-文档：
+## 文档
 
-1. `docs/00-project-scope.md`
-2. `docs/02-payload-format.md`
-3. `docs/03-android13-bootstrap.md`
-4. `docs/04-art-shadow-code-item.md`
-5. `docs/05-constructor-stubs.md`
-6. `docs/06-testing.md`
+- [架构与启动流程](docs/architecture.md)
+- [内部文件格式](docs/file-formats.md)
+- [安全边界](docs/security.md)
+- [测试与故障定位](docs/testing.md)
+- [第三方依赖](vendor/README.md)
+
+## 需要知道的限制
+
+- 无法安全生成默认返回桩的极短方法或特殊构造器会保留原实现，CLI 会
+  明确统计，不会把它们假装成已保护
+- 已解密的 Shadow CodeItem 必须保留到进程结束，因为 `ArtMethod::data_` 保存的
+  是原始指针
+- 离线客户端必须同时携带解密能力。静态资源加密可以增加提取成本，但无法
+  阻止具有 root/进程内存读取能力的对手 dump 正在运行的明文
+- 加密数据难以被 zip 再压缩，加上 Hollow dex 和 Payload 同时存在，产物体积会
+  明显大于输入 apk
+
+这些限制和当前的密钥方案在 [安全边界](docs/security.md) 中有更完整说明
