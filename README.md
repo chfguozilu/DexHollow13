@@ -1,4 +1,4 @@
-# DexHollow13
+<img width="808" height="199" alt="图片" src="https://github.com/user-attachments/assets/fbf14411-a683-4bb8-8b27-0bc713ba522a" /><img width="808" height="199" alt="图片" src="https://github.com/user-attachments/assets/0688c7fb-47fa-4a15-8e4c-e67bab5e9eb1" /># DexHollow13
 
 DexHollow13 是一个面向 Android 13 / ART 的 dex 方法体抽取工具。它接收一个
 apk，抽取其中可保护方法的 `code_item`，然后生成一个经过 zipalign 但没有
@@ -193,3 +193,20 @@ docs/              项目文档
   明显大于输入 apk
 
 这些限制和当前的密钥方案在 [安全边界](docs/security.md) 中有更完整说明
+
+## 示例：
+
+先把项目拉到本地
+
+<img width="808" height="199" alt="图片" src="https://github.com/user-attachments/assets/a4cbbfd7-14e7-40f8-96d3-d1e8d6592239" />
+
+然后进入目录，设置ANDROID_SDK_ROOT，因为Sdk中有这些默认版本的工具链，所以没有设置额外的环境变量，如果遇到报错，那么按照前面去设置一下就行了
+
+<img width="965" height="527" alt="图片" src="https://github.com/user-attachments/assets/c668344f-221b-4876-aae8-56cfc6944871" />
+
+编译完成之后就可以开始给 app 加壳了
+
+<img width="933" height="205" alt="图片" src="https://github.com/user-attachments/assets/a334900d-5115-4ca4-8e4b-7cdb913ea4ea" />
+
+<img width="980" height="672" alt="图片" src="https://github.com/user-attachments/assets/8a07412a-b5e0-47cd-acbc-e2d69b8a4682" />
+
