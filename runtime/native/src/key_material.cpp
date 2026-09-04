@@ -1,0 +1,32 @@
+#include "dexhollow13/crypto/key_material.h"
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
+
+namespace dexhollow13::crypto {
+namespace {
+
+// volatile 阻止编译器把 XOR 结果在构建期常量折叠。Host 实际补丁的是这个被 Runtime 函数
+// 读取的 64 字节对象，而不是某个随后不会使用的重复常量。
+alignas(16) const volatile std::uint8_t kInjectedKeyMaterial[64U]
+    __attribute__((used, section(".rodata.dexhollow13_key"))) = {
+        0x91U, 0xc2U, 0x23U, 0x16U, 0xb8U, 0xa0U, 0xc7U, 0x09U, 0xb3U, 0xaaU, 0x27U, 0x57U, 0x0bU,
+        0xe6U, 0x64U, 0x58U, 0x9fU, 0x2fU, 0x30U, 0x0bU, 0xc2U, 0xd8U, 0x93U, 0xf2U, 0x83U, 0x8fU,
+        0xfcU, 0x88U, 0x26U, 0x51U, 0x95U, 0xbaU, 0x85U, 0x11U, 0x47U, 0x41U, 0x0dU, 0x14U, 0x8bU,
+        0x00U, 0xd7U, 0x5cU, 0xb6U, 0xb9U, 0x3bU, 0x39U, 0x89U, 0x58U, 0x6dU, 0x71U, 0xf4U, 0x4fU,
+        0x1eU, 0xe1U, 0xe5U, 0x5dU, 0xe2U, 0x42U, 0xb3U, 0x00U, 0xa6U, 0x5eU, 0xfaU, 0xb6U,
+};
+
+}  // namespace
+
+MasterKey LoadEmbeddedMasterKey() {
+    MasterKey master_key{};
+    for (std::size_t index = 0U; index < master_key.size(); ++index) {
+        master_key[index] = static_cast<std::uint8_t>(
+            kInjectedKeyMaterial[index] ^ kInjectedKeyMaterial[master_key.size() + index]);
+    }
+    return master_key;
+}
+
+}  // namespace dexhollow13::crypto
