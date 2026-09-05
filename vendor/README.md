@@ -11,10 +11,10 @@ vendor/
 
 ## 依赖清单
 
-| 库 | 版本 | 许可证 | 用途 |
+| 库 | 版本 | 用途 |
 |---|---|---|---|
-| [ShadowHook](https://github.com/bytedance/android-inline-hook) | 2.0.1 | MIT | Hook Android 13 `ClassLinker::LoadMethod` |
-| [Monocypher](https://monocypher.org/) | 4.0.3 | BSD-2-Clause 或 CC0-1.0 | XChaCha20-Poly1305、keyed BLAKE2b、敏感数据擦除 |
+| [ShadowHook](https://github.com/bytedance/android-inline-hook) | 2.0.1 | Hook Android 13 `ClassLinker::LoadMethod` |
+| [Monocypher](https://monocypher.org/) | 4.0.3 | XChaCha20-Poly1305、keyed BLAKE2b、敏感数据擦除 |
 
 Host 还使用系统开发包：
 
