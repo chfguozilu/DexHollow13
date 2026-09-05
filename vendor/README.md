@@ -12,7 +12,7 @@ vendor/
 ## 依赖清单
 
 | 库 | 版本 | 用途 |
-|---|---|---|---|
+|---|---|---|
 | [ShadowHook](https://github.com/bytedance/android-inline-hook) | 2.0.1 | Hook Android 13 `ClassLinker::LoadMethod` |
 | [Monocypher](https://monocypher.org/) | 4.0.3 | XChaCha20-Poly1305、keyed BLAKE2b、敏感数据擦除 |
 
